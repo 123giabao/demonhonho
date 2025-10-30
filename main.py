@@ -1,3 +1,5 @@
+import os
+import json
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -11,7 +13,7 @@ app = Flask(__name__)
 app.secret_key = "secret123"
 
 
-DEEPSEEK_API_KEY = "sk-474836e4c7b6462d8a9a24ed964b0251"
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY")
 deepseek_client = OpenAI(
     api_key=DEEPSEEK_API_KEY,
     base_url="https://api.deepseek.com"
@@ -19,10 +21,31 @@ deepseek_client = OpenAI(
 
 
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name(
-    "./demomo-476606-c3bca26e45d0.json", 
-    scope
-)
+GSPREAD_CREDS_JSON = os.environ.get("GSPREAD_SERVICE_ACCOUNT_JSON")
+
+if GSPREAD_CREDS_JSON:
+    try:
+        # Tải chuỗi JSON thành dictionary
+        creds_info = json.loads(GSPREAD_CREDS_JSON) 
+        
+        # Xác thực bằng dictionary thay vì file
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(
+            creds_info, 
+            scope
+        )
+        client = gspread.authorize(creds)
+        print("✅ Xác thực Google Sheets thành công.")
+    except Exception as e:
+        # Nếu có lỗi (ví dụ: JSON sai định dạng)
+        print(f"❌ Lỗi cấu hình Google Sheets: {e}")
+        # THOÁT ỨNG DỤNG HOẶC XỬ LÝ LỖI KHỞI TẠO
+        # Tùy chọn: bạn có thể raise một exception ở đây để Vercel báo lỗi rõ ràng hơn
+        raise RuntimeError(f"Lỗi khởi tạo Gspread từ biến môi trường: {e}")
+
+else:
+    # Nếu biến môi trường chưa được thiết lập
+    print("❌ Thiếu biến môi trường GSPREAD_SERVICE_ACCOUNT_JSON.")
+    raise RuntimeError("Vui lòng thiết lập biến môi trường GSPREAD_SERVICE_ACCOUNT_JSON trên Vercel.")
 client = gspread.authorize(creds)
 
 
@@ -646,4 +669,5 @@ def logout():
 
 if __name__ == '__main__':
     app.run()
+
 
