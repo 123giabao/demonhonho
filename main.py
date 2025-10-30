@@ -46,7 +46,7 @@ else:
     # Nếu biến môi trường chưa được thiết lập
     print("❌ Thiếu biến môi trường GSPREAD_SERVICE_ACCOUNT_JSON.")
     raise RuntimeError("Vui lòng thiết lập biến môi trường GSPREAD_SERVICE_ACCOUNT_JSON trên Vercel.")
-client = gspread.authorize(creds)
+#client = gspread.authorize(creds)
 
 
 sheet_users = client.open_by_key("1EDxxtn4WTuutzoR9GSa8wi97tU46it1AF0tFc_urcD4").sheet1
@@ -669,5 +669,6 @@ def logout():
 
 if __name__ == '__main__':
     app.run()
+
 
 
